@@ -50,26 +50,26 @@ function toLobby(){H.ph="lobby";clearInterval(H.tick);pushHost({ph:"lobby"});ren
 function tvCount(){return peers().filter(p=>!p.sameTab&&p.presence.role==="tv").length}
 function renderHost(){app.replaceChildren();
  if(H.ph==="lobby"){const ps=players(),tv=tvCount();
-  app.append(
-   el("div",{class:"board",style:"text-align:center;padding:1rem"},el("div",{class:"muted"},"رمز اللعبة"),el("div",{class:"pin"},H.pin),
-    el("div",{class:"note",style:"margin-top:.6rem"},"على التلفزيون افتح ",el("b",{class:"short",style:"font-size:1rem"},location.host+"/tv")," واكتب الرمز"),
-    el("div",{id:"tvst",class:"note",style:"margin-top:.3rem"},tv?"✅ التلفزيون متصل":"⏳ التلفزيون غير متصل بعد")),
-   el("div",{class:"row"},el("span",{class:"big",id:"pc",style:"font-size:2rem"},ps.length),el("span",{class:"muted"},"لاعب انضم")),
-   el("div",{class:"players",id:"plist"},ps.map(p=>el("span",null,pname(p)))),
-   el("div",{class:"label"},"التصنيف"),chips(CATS,H.cat,v=>{H.cat=v;renderHost()}),
-   el("div",{class:"label"},"عدد الأسئلة"),chips([10,20,30,50],H.n,v=>{H.n=v;renderHost()}),
-   el("div",{class:"label"},"الوقت لكل سؤال (ثانية)"),chips([10,20,30],H.dur,v=>{H.dur=v;renderHost()}),
-   el("button",{class:"btn main",onclick:startGame},"ابدأ اللعبة"));return}
+  app.append(el("div",{class:"lobby",style:"grid-template-columns:minmax(260px,380px) 1fr"},
+   el("div",{class:"qrbox"},el("canvas",{id:"qr"}),el("div",{class:"short"},location.host),el("div",{style:"margin-top:.4rem"},"رمز اللعبة"),el("div",{class:"pin"},H.pin)),
+   el("div",null,el("div",{class:"big"},"انضم الآن!"),el("p",{class:"qtext",style:"font-size:1.4rem;font-weight:500"},"امسح الرمز بجوالك أو افتح "+location.host+" واكتب الرمز"),
+    el("div",{class:"row",style:"margin:1rem 0"},el("span",{class:"big",id:"pc"},ps.length),el("span",{class:"muted",style:"font-size:1.3rem"},"لاعب")),
+    el("div",{class:"players tvp",id:"plist"},ps.map(p=>el("span",null,pname(p)))),
+    el("div",{class:"label",style:"margin-top:1.2rem"},"التصنيف"),chips(CATS,H.cat,v=>{H.cat=v;renderHost()}),
+    el("div",{class:"label",style:"margin-top:.8rem"},"عدد الأسئلة"),chips([10,20,30,50],H.n,v=>{H.n=v;renderHost()}),
+    el("div",{class:"label",style:"margin-top:.8rem"},"الوقت لكل سؤال (ثانية)"),chips([10,20,30],H.dur,v=>{H.dur=v;renderHost()}),
+    el("div",{class:"row",style:"margin-top:1.2rem"},el("button",{class:"btn main",onclick:startGame},"ابدأ اللعبة")))));
+  qr("qr",joinUrl(H.pin));return}
  if(H.ph==="q"||H.ph==="r"){const x=cur(),rv=H.ph==="r";
-  app.append(el("div",{class:"bar"},el("div",{class:"muted"},`سؤال ${H.i+1} من ${H.order.length}`),
-   rv?el("div",{class:"muted"},"النتيجة على الشاشة"):el("div",{class:"row"},el("span",{class:"muted",id:"ans"},`${answers().length} / ${players().length} أجابوا`),el("span",{class:"timer",id:"tmr"},Math.max(0,H.dur-Math.floor((Date.now()-H.start)/1000))))),
-   el("p",{class:"qtext",style:"font-size:1.3rem"},x[1]),
-   el("div",{class:"opts",style:"grid-template-columns:1fr"},x[2].map((t,i)=>{const ok=i===x[3];
-    return el("div",{class:"opt c"+i+(ok?" ok":" dim"),style:"min-height:auto"},el("span",{class:"sh"},SH[i]),el("span",{class:"t"},t),ok?el("span",{class:"mark"},"✓"):null,rv?el("span",{class:"n"},H.res.cnt[i]):null)})),
+  app.append(el("div",{class:"bar"},el("div",{class:"muted",style:"font-size:1.2rem"},`سؤال ${H.i+1} من ${H.order.length} · ${x[0]}`),
+   rv?null:el("div",{class:"row"},el("span",{class:"muted",id:"ans",style:"font-size:1.2rem"},`${answers().length} / ${players().length} أجابوا`),el("span",{class:"timer",id:"tmr"},Math.max(0,H.dur-Math.floor((Date.now()-H.start)/1000))))),
+   el("p",{class:"qtext tvq"},x[1]),
+   el("div",{class:"opts"},x[2].map((t,i)=>{const ok=rv&&i===x[3];
+    return el("div",{class:"opt tvo c"+i+(rv&&!ok?" dim":"")+(ok?" ok":"")},el("span",{class:"sh"},SH[i]),el("span",{class:"t"},t),ok?el("span",{class:"mark"},"✓"):null,rv?el("span",{class:"n"},H.res.cnt[i]):null)})),
    el("div",{class:"row"},rv?el("button",{class:"btn main",onclick:nextQ},H.i+1<H.order.length?"السؤال التالي":"النتائج النهائية"):el("button",{class:"btn main",onclick:reveal},"اكشف الإجابة"),
     el("button",{class:"btn",onclick:()=>{if(confirm("إنهاء اللعبة؟"))endGame()}},"إنهاء")),
    rv?board(H.res.top):null);return}
- app.append(el("div",{class:"center"},el("div",{class:"result"},"انتهت اللعبة 🏆"),el("div",{style:"width:100%"},board(H.res.top)),el("button",{class:"btn main",onclick:toLobby},"لعبة جديدة")))}
+ app.append(el("div",{class:"center"},el("div",{class:"big"},"النتائج النهائية 🏆"),el("div",{style:"width:min(640px,100%);font-size:1.3rem"},board(H.res.top)),el("button",{class:"btn main",onclick:toLobby},"لعبة جديدة")))}
 function hostSync(){if(H.ph==="lobby"){const ps=players();if($("pc")){$("pc").textContent=ps.length;$("plist").replaceChildren(...ps.map(p=>el("span",null,pname(p))))}
   if($("tvst"))$("tvst").textContent=tvCount()?"✅ التلفزيون متصل":"⏳ التلفزيون غير متصل بعد"}
  else if(H.ph==="q"){const n=answers().length,t=players().length;if($("ans"))$("ans").textContent=`${n} / ${t} أجابوا`;if(t>0&&n>=t)reveal()}}
